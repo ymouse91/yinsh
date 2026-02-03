@@ -1,0 +1,1201 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" sizes="192x192" href="./icon192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="./icon192.png">
+
+  <title>YINSH (PC/iPad vaaka)</title>
+  <style>
+    :root{
+  --winStroke:#fbbf24;
+  --winFill:rgba(251,191,36,.18);
+
+      --bg0:#0b1220;
+      --bg1:#101a2e;
+      --panel:#0f172a;
+      --panel2:#111c33;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --line:#2a385a;
+      --nodeStroke: rgba(255,255,255,.22);
+      --nodeFill: rgba(255,255,255,.10);
+
+      --whiteRing:#f8fafc;
+      --blackRing:#111827;
+
+      --whiteMark:#e5e7eb;
+      --blackMark:#111827;
+	  
+	  /* pelaaja 2 = punainen */
+--blackRing:#fb7185;
+--blackMark:#fb7185;
+
+
+      --accent:#60a5fa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      background:
+        radial-gradient(1200px 600px at 25% 10%, #172a44 0%, var(--bg0) 55%, #06080e 100%);
+      overflow:hidden;
+    }
+
+    .app{
+      height:100%;
+      display:grid;
+      grid-template-columns: 1fr 340px;
+      gap:12px;
+      padding:12px;
+      box-sizing:border-box;
+    }
+
+    .boardWrap{
+      position:relative;
+      background:linear-gradient(180deg, rgba(16,26,46,.92), rgba(11,18,32,.92));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:0;
+    }
+
+    svg{ width:100%; height:100%; display:block; }
+
+    .overlay{
+      position:absolute;
+      left:12px; top:12px;
+      background:rgba(0,0,0,.38);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:12px;
+      padding:8px 10px;
+      font-size:12px;
+      color:var(--muted);
+      backdrop-filter: blur(4px);
+      pointer-events:none;
+      max-width: 62ch;
+    }
+
+    .side{
+      background:linear-gradient(180deg, rgba(17,28,51,.92), rgba(15,23,42,.92));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:0;
+      overflow:auto;
+    }
+
+    .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:800;
+      cursor:pointer;
+      user-select:none;
+    }
+    .btn:hover{ border-color: rgba(255,255,255,.22); }
+    .btn.primary{ background:rgba(96,165,250,.18); border-color: rgba(96,165,250,.35); }
+    .btn.warn{ background:rgba(251,191,36,.18); border-color: rgba(251,191,36,.35); }
+    .btn.bad{ background:rgba(251,113,133,.18); border-color: rgba(251,113,133,.35); }
+
+    .pill{
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.04);
+      padding:6px 10px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:999px;
+      background:rgba(255,255,255,.35);
+    }
+    .dot.white{ background: var(--whiteRing); }
+    .dot.black{ background: #fb7185; }
+
+    .status{
+      background:rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:12px;
+      padding:10px;
+      line-height:1.25;
+      font-size:14px;
+    }
+    .status b{ color:var(--text); }
+
+    .small{ font-size:12px; color:var(--muted); line-height:1.25; }
+    .sep{ height:1px; background:rgba(255,255,255,.08); margin:6px 0; }
+
+    .scoreBox{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+    }
+    .card{
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.04);
+      border-radius:12px;
+      padding:10px;
+    }
+    .card h3{
+      margin:0 0 6px 0;
+      font-size:13px;
+      color:var(--muted);
+      font-weight:800;
+    }
+    .big{
+      font-size:22px;
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+
+    @media (max-width: 980px){
+      .app{ grid-template-columns: 1fr; }
+      .side{ order:2; }
+      .boardWrap{ order:1; min-height: 62vh; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="boardWrap">
+      <div hidden class="overlay" id="hint" ></div>
+      <svg id="svg" viewBox="0 0 1000 1000" aria-label="YINSH board"></svg>
+    </div>
+
+    <div class="side">
+      <div class="row">
+	          <label class="pill" style="gap:10px; cursor:pointer; user-select:none;">
+          <input type="checkbox" id="quickChk" style="accent-color: var(--accent); transform: translateY(1px);">
+          <span>Pikapeli (1 rivi)</span>
+        </label>
+        <button class="btn primary" id="newBtn">Uusi peli</button>
+        <button class="btn" id="undoBtn">Peru</button>
+        <button class="btn warn" id="restartBtn" style="display:none;">Aloita alusta</button>
+        <button class="btn" id="cycleRowBtn" style="display:none;">Vaihda 5</button>
+
+      </div>
+
+      <div class="row">
+        <span class="pill" id="turnPill"><span class="dot"></span><span>Vuoro: –</span></span>
+        <span class="pill" id="phasePill">Vaihe: –</span>
+      </div>
+
+      <div class="scoreBox">
+        <div class="card">
+          <h3>Valkoinen: poistetut renkaat</h3>
+          <div class="big" id="wRemoved">0 / 3</div>
+        </div>
+        <div class="card">
+          <h3>Musta: poistetut renkaat</h3>
+          <div class="big" id="bRemoved">0 / 3</div>
+        </div>
+      </div>
+
+      <div class="status" id="status"></div>
+
+      <div class="sep"></div>
+
+      <div class="small">
+        <b>Ohjaus:</b><br>
+        • Aloitus: aseta 5 rengasta vuorotellen risteyksiin.<br>
+        • Normaali vuoro: klikkaa omaa rengasta → valitse laillinen kohde (korostetaan).<br>
+        • Hyppy merkkien yli kääntää hypätyt merkit.<br>
+        • Kun 5 merkin rivi syntyy, se poistetaan ja poistetaan myös yksi oma rengas.<br>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* =========================================================
+   YINSH (rules-based)
+   - Intersections only
+   - Straight lines
+   - Move: place marker in ring, then move ring.
+   - Jump markers only if contiguous, must land first empty behind them.
+   - Flip jumped markers (not the placed one).
+   - 5-in-row => remove row markers + remove one own ring.
+   - If you make a row for opponent, opponent removes before his move.
+   Source: Yinsh-Rules.pdf
+========================================================= */
+
+const UI = {
+  svg: document.getElementById("svg"),
+  hint: document.getElementById("hint"),
+  status: document.getElementById("status"),
+  turnPill: document.getElementById("turnPill"),
+  phasePill: document.getElementById("phasePill"),
+  wRemoved: document.getElementById("wRemoved"),
+  bRemoved: document.getElementById("bRemoved"),
+  newBtn: document.getElementById("newBtn"),
+  undoBtn: document.getElementById("undoBtn"),
+  restartBtn: document.getElementById("restartBtn"),
+  cycleRowBtn: document.getElementById("cycleRowBtn"),
+  quickChk: document.getElementById("quickChk"),
+};
+
+function setStatus(html){
+  UI.status.innerHTML = html;
+}
+function setHint(text){
+  UI.hint.textContent = text || "";
+}
+function playerName(p){ return p===1 ? "Valkoinen" : "Musta"; }
+function playerDotClass(p){ return p===1 ? "white" : "black"; }
+
+const PHASE = {
+  PLACE_RINGS: "PLACE_RINGS",
+  MOVE_SELECT_RING: "MOVE_SELECT_RING",
+  MOVE_SELECT_DEST: "MOVE_SELECT_DEST",
+  RESOLVE_ROW_REMOVE_MARKERS: "RESOLVE_ROW_REMOVE_MARKERS",
+  RESOLVE_ROW_REMOVE_RING: "RESOLVE_ROW_REMOVE_RING",
+  GAME_OVER: "GAME_OVER",
+};
+
+// Board model: axial hex coords radius 5, remove 6 extreme corners => 85 intersections
+const BOARD = (function(){
+  const R = 5;
+  const size = 60;
+  const cx = 500, cy = 500;
+
+  function isRemovedCorner(q,r){
+    // remove the 6 axial corners (classic digital YINSH mapping)
+    return (
+      (q=== 5 && r=== 0) ||
+      (q=== 0 && r=== 5) ||
+      (q===-5 && r=== 5) ||
+      (q===-5 && r=== 0) ||
+      (q=== 0 && r===-5) ||
+      (q=== 5 && r===-5)
+    );
+  }
+
+  const nodes = [];
+  let id = 0;
+  for(let q=-R; q<=R; q++){
+    for(let r=Math.max(-R, -q-R); r<=Math.min(R, -q+R); r++){
+      if(isRemovedCorner(q,r)) continue;
+      const x = cx + size * (Math.sqrt(3)*q + Math.sqrt(3)/2*r);
+      const y = cy + size * (3/2*r);
+      nodes.push({ id: "n"+(id++), q,r, x,y });
+    }
+  }
+
+  const byQR = new Map(nodes.map(n => [n.q+","+n.r, n.id]));
+  const nodeById = new Map(nodes.map(n => [n.id, n]));
+
+  // Build straight lines in 3 directions:
+  // lines of constant r, constant q, constant s=-q-r
+  const lines = [];
+  function addLines(groupKeyFn, sortKeyFn){
+    const groups = new Map();
+    for(const n of nodes){
+      const k = groupKeyFn(n);
+      if(!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(n);
+    }
+    for(const list of groups.values()){
+      list.sort((a,b)=> sortKeyFn(a)-sortKeyFn(b));
+      lines.push(list.map(n=>n.id));
+    }
+  }
+  addLines(n=>n.r, n=>n.q);            // r constant
+  addLines(n=>n.q, n=>n.r);            // q constant
+  addLines(n=>-(n.q+n.r), n=>n.q);     // s constant
+
+  // Map nodeId -> which lines it belongs to
+  const nodeLines = new Map();
+  lines.forEach((line, li)=>{
+    line.forEach((nid, pos)=>{
+      if(!nodeLines.has(nid)) nodeLines.set(nid, []);
+      nodeLines.get(nid).push({ li, pos });
+    });
+  });
+
+  return { nodes, nodeById, lines, nodeLines };
+})();
+
+const STATE = {
+  currentPlayer: 1, // 1 white, 2 black
+  phase: PHASE.PLACE_RINGS,
+
+  // board occupancy
+  // nodeId -> {type:"RING"|"MARK", player:1|2}
+  occ: new Map(),
+
+  // setup
+  ringsPlaced: {1:0, 2:0},
+
+  // removed rings
+  removedRings: {1:0, 2:0},
+
+  // win condition: remove this many own rings (normal 3, quick 1)
+  winTarget: 3,
+  quickMode: false,
+
+  // winner (used in quick mode)
+  winner: null,
+  winningRow: null, // array of node ids (length 5) to highlight in quick-mode win
+
+  // selection
+  selectedRing: null,
+  legalDests: new Set(),
+
+  // row resolution
+  pendingRows: {1: [], 2: []},     // rows to resolve before player's move
+  activeRow: null,                 // {player, nodes:[...]} for current resolution
+  mustRemoveRingFor: null,         // player id who must remove a ring now
+
+  // row-choice UI (for >5 rows and multiple simultaneous 5-segments)
+  rowChoices: [],
+  rowChoiceIndex: 0,
+
+  resolvingFromPending: false,
+
+  history: [],
+};
+
+function snapshot(){
+  return {
+    currentPlayer: STATE.currentPlayer,
+    phase: STATE.phase,
+    ringsPlaced: {...STATE.ringsPlaced},
+    removedRings: {...STATE.removedRings},
+    winTarget: STATE.winTarget,
+    quickMode: STATE.quickMode,
+    winner: STATE.winner,
+    winningRow: STATE.winningRow ? [...STATE.winningRow] : null,
+    selectedRing: STATE.selectedRing,
+    legalDests: Array.from(STATE.legalDests),
+    pendingRows: {1: STATE.pendingRows[1].map(r=>({...r, nodes:[...r.nodes]})),
+                  2: STATE.pendingRows[2].map(r=>({...r, nodes:[...r.nodes]}))},
+    activeRow: STATE.activeRow ? {player:STATE.activeRow.player, nodes:[...STATE.activeRow.nodes]} : null,
+    mustRemoveRingFor: STATE.mustRemoveRingFor,
+    rowChoices: STATE.rowChoices.map(r=>({player:r.player, nodes:[...r.nodes]})),
+    rowChoiceIndex: STATE.rowChoiceIndex,
+    resolvingFromPending: STATE.resolvingFromPending,
+    occ: Array.from(STATE.occ.entries()).map(([k,v])=>[k,{...v}]),
+  };
+}
+function restore(snap){
+  STATE.currentPlayer = snap.currentPlayer;
+  STATE.phase = snap.phase;
+  STATE.ringsPlaced = snap.ringsPlaced;
+  STATE.removedRings = snap.removedRings;
+  STATE.selectedRing = snap.selectedRing;
+  STATE.legalDests = new Set(snap.legalDests);
+  STATE.pendingRows = snap.pendingRows;
+  STATE.activeRow = snap.activeRow;
+  STATE.mustRemoveRingFor = snap.mustRemoveRingFor;
+  STATE.rowChoices = (snap.rowChoices||[]).map(r=>({player:r.player, nodes:[...r.nodes]}));
+  STATE.rowChoiceIndex = snap.rowChoiceIndex || 0;
+  STATE.resolvingFromPending = !!snap.resolvingFromPending;
+  STATE.occ = new Map(snap.occ);
+}
+
+function pushHistory(){
+  STATE.history.push(snapshot());
+}
+function undo(){
+  const snap = STATE.history.pop();
+  if(!snap) return;
+  restore(snap);
+  postState();
+  render();
+}
+
+function resetGame(){
+  STATE.currentPlayer = 1;
+  STATE.phase = PHASE.PLACE_RINGS;
+  STATE.occ.clear();
+  STATE.ringsPlaced = {1:0,2:0};
+  STATE.removedRings = {1:0,2:0};
+  STATE.quickMode = !!(UI.quickChk && UI.quickChk.checked);
+  STATE.winTarget = STATE.quickMode ? 1 : 3;
+  STATE.winner = null;
+  STATE.winningRow = null;
+  STATE.selectedRing = null;
+  STATE.legalDests.clear();
+  STATE.pendingRows = {1:[],2:[]};
+  STATE.activeRow = null;
+  STATE.mustRemoveRingFor = null;
+  STATE.rowChoices = [];
+  STATE.rowChoiceIndex = 0;
+  STATE.resolvingFromPending = false;
+  STATE.history.length = 0;
+  postState();
+  render();
+}
+
+UI.newBtn.addEventListener("click", resetGame);
+UI.undoBtn.addEventListener("click", undo);
+UI.restartBtn.addEventListener("click", ()=>{
+  // keep nothing; same as reset here
+  resetGame();
+});
+
+UI.quickChk.addEventListener("change", ()=>{
+  // Switch mode -> restart to keep rules consistent
+  resetGame();
+});
+
+UI.cycleRowBtn.addEventListener("click", ()=>{
+  if(!STATE.rowChoices || STATE.rowChoices.length <= 1) return;
+  pushHistory();
+  STATE.rowChoiceIndex = (STATE.rowChoiceIndex + 1) % STATE.rowChoices.length;
+  STATE.activeRow = STATE.rowChoices[STATE.rowChoiceIndex] || null;
+  render();
+  postState();
+});
+
+function isEmpty(nid){ return !STATE.occ.has(nid); }
+function getOcc(nid){ return STATE.occ.get(nid) || null; }
+
+function endGame(winnerPlayer, winningRowNodes=null){
+  STATE.winner = winnerPlayer;
+  STATE.winningRow = Array.isArray(winningRowNodes) ? [...winningRowNodes] : null;
+  setPhase(PHASE.GAME_OVER);
+}
+
+function setPhase(p){
+  STATE.phase = p;
+  postState();
+}
+
+function postState(){
+  // row choice button hidden by default
+  UI.cycleRowBtn.style.display = "none";
+
+  // pills
+  const dot = UI.turnPill.querySelector(".dot");
+  dot.className = "dot " + playerDotClass(STATE.currentPlayer);
+  UI.turnPill.querySelector("span:last-child").textContent = "Vuoro: " + playerName(STATE.currentPlayer);
+
+  const phaseLabel =
+    STATE.phase === PHASE.PLACE_RINGS ? "Renkaiden asetus" :
+    STATE.phase === PHASE.MOVE_SELECT_RING ? "Valitse rengas" :
+    STATE.phase === PHASE.MOVE_SELECT_DEST ? "Valitse kohde" :
+    STATE.phase === PHASE.RESOLVE_ROW_REMOVE_MARKERS ? "Poista rivi" :
+    STATE.phase === PHASE.RESOLVE_ROW_REMOVE_RING ? "Poista rengas" :
+    STATE.phase === PHASE.GAME_OVER ? "Peli päättyi" : STATE.phase;
+  UI.phasePill.textContent = "Vaihe: " + phaseLabel;
+
+  UI.wRemoved.textContent = `${STATE.removedRings[1]} / ${STATE.winTarget}`;
+  UI.bRemoved.textContent = `${STATE.removedRings[2]} / ${STATE.winTarget}`;
+
+  // status/hint
+  if(STATE.phase === PHASE.PLACE_RINGS){
+    setHint("Klikkaa tyhjää risteystä asettaaksesi renkaan. 5 rengasta per pelaaja.");
+    setStatus(`<b>Renkaiden asetus</b><br><span class="small">${playerName(STATE.currentPlayer)} asettaa renkaan (${STATE.ringsPlaced[STATE.currentPlayer]}/5).</span>`);
+    return;
+  }
+
+  if(STATE.phase === PHASE.MOVE_SELECT_RING){
+    setHint("Klikkaa omaa rengasta aloittaaksesi siirron (merkki asetetaan automaattisesti renkaan alle).");
+    setStatus(`<b>Siirto</b><br><span class="small">Valitse oma rengas. Vuoro alkaa asettamalla merkki renkaan alle.</span>`);
+    return;
+  }
+
+  if(STATE.phase === PHASE.MOVE_SELECT_DEST){
+    setHint("Klikkaa korostettua kohderisteystä (lailliset siirrot on merkitty).");
+    setStatus(`<b>Siirto</b><br><span class="small">Valitse laillinen kohde. Hyppy merkkien yli kääntää hypätyt merkit.</span>`);
+    return;
+  }
+
+  if(STATE.phase === PHASE.RESOLVE_ROW_REMOVE_MARKERS){
+    const p = STATE.activeRow?.player ?? STATE.currentPlayer;
+
+    const n = (STATE.rowChoices && STATE.rowChoices.length) ? STATE.rowChoices.length : 0;
+    if(n > 1) UI.cycleRowBtn.style.display = "";
+
+    setHint("Klikkaa korostettuja merkkejä poistaaksesi valitun 5 merkin rivin.");
+    setStatus(`<b>Rivi muodostettu</b><br><span class="small">${playerName(p)} poistaa valitun 5 merkin rivin ja sen jälkeen yhden oman renkaan.${n>1 ? " Vaihtoehtoja: "+n+" (Vaihda 5)." : ""}</span>`);
+    return;
+  }
+
+  if(STATE.phase === PHASE.RESOLVE_ROW_REMOVE_RING){
+    const p = STATE.mustRemoveRingFor ?? STATE.currentPlayer;
+    setHint("Klikkaa mitä tahansa omaa rengasta poistaaksesi sen (merkiksi tehdystä rivistä).");
+    setStatus(`<b>Poista rengas</b><br><span class="small">${playerName(p)}: poista yksi oma rengas.</span>`);
+    return;
+  }
+
+  if(STATE.phase === PHASE.GAME_OVER){
+    setHint("");
+    const winner = (STATE.winner===1 || STATE.winner===2) ? STATE.winner : (STATE.removedRings[1] >= STATE.winTarget ? 1 : 2);
+    setStatus(`<b>✅ Peli päättyi!</b><br><span class="small">Voittaja: <b>${playerName(winner)}</b> ${STATE.quickMode ? "(5 suora)" : "(" + STATE.winTarget + " poistettua rengasta)"}.</span>`);
+    return;
+  }
+}
+
+// --- Row detection: find all 5-in-row segments for a given player
+function findRowsForPlayer(player){
+  const rows = [];
+  for(const line of BOARD.lines){
+    // scan consecutive markers of this player
+    let runStart = -1;
+    let runLen = 0;
+    for(let i=0;i<line.length;i++){
+      const o = getOcc(line[i]);
+      const ok = o && o.type==="MARK" && o.player===player;
+      if(ok){
+        if(runLen===0) runStart = i;
+        runLen++;
+      }else{
+        if(runLen >= 5){
+          // from runStart..runStart+runLen-1, generate all 5 segments
+          for(let s=runStart; s<=runStart+runLen-5; s++){
+            rows.push({ player, nodes: line.slice(s, s+5) });
+          }
+        }
+        runLen = 0;
+        runStart = -1;
+      }
+    }
+    if(runLen >= 5){
+      for(let s=runStart; s<=runStart+runLen-5; s++){
+        rows.push({ player, nodes: line.slice(s, s+5) });
+      }
+    }
+  }
+
+  // Deduplicate segments (some boards can produce duplicates via identical node ids; unlikely)
+  const seen = new Set();
+  const out = [];
+  for(const r of rows){
+    const key = r.nodes.join("|");
+    if(seen.has(key)) continue;
+    seen.add(key);
+    out.push(r);
+  }
+  return out;
+}
+
+// If multiple rows exist, rules allow choices (esp. intersecting).
+// Minimal UX here: if there are multiple, we pick one “best” to present first,
+// but user can cycle (button) would be extra. For now: choose first, and if after removal
+// there are still rows, we resolve again.
+function chooseRow(rows){
+  // Heuristic: prefer a row with most markers that are currently also in other rows (intersection-heavy),
+  // so removing it will likely break others (matches rule behavior).
+  if(rows.length===1) return rows[0];
+  const freq = new Map();
+  for(const r of rows){
+    for(const nid of r.nodes) freq.set(nid, (freq.get(nid)||0)+1);
+  }
+  let best = rows[0], bestScore = -1;
+  for(const r of rows){
+    let score = 0;
+    for(const nid of r.nodes) score += (freq.get(nid)||1);
+    if(score > bestScore){ bestScore = score; best = r; }
+  }
+  return best;
+}
+
+function beginRowResolution(rows, player, fromPending=false){
+  STATE.rowChoices = rows;
+  STATE.rowChoiceIndex = 0;
+  STATE.activeRow = rows[0] || null;
+  STATE.mustRemoveRingFor = player;
+  STATE.resolvingFromPending = !!fromPending;
+  setPhase(PHASE.RESOLVE_ROW_REMOVE_MARKERS);
+}
+
+function checkAndQueueRowsAfterMove(mover){
+  const opp = mover===1 ? 2 : 1;
+
+  const myRows = findRowsForPlayer(mover);
+  const oppRows = findRowsForPlayer(opp);
+
+  // ⚡ Pikapeli: peli päättyy heti, kun jommallekummalle syntyy 5 suora.
+// Voittorivi merkitään (ei poisteta). Jos molemmille syntyy samalla siirrolla, siirtäjä voittaa.
+  if(STATE.quickMode){
+    if(myRows.length){
+      const wr = chooseRow(myRows);
+      endGame(mover, wr ? wr.nodes : null);
+      return;
+    }
+    if(oppRows.length){
+      const wr = chooseRow(oppRows);
+      endGame(opp, wr ? wr.nodes : null);
+      return;
+    }
+    STATE.currentPlayer = opp;
+    startTurn();
+    return;
+  }
+
+  // IMPORTANT (normal mode):
+  if(oppRows.length){
+    STATE.pendingRows[opp] = oppRows;
+  }
+
+  if(myRows.length){
+    beginRowResolution(myRows, mover, false);
+    return;
+  }
+
+  STATE.currentPlayer = opp;
+  startTurn();
+}
+
+function startTurn(){
+  const p = STATE.currentPlayer;
+
+  // ⚡ Pikapeli: ei rivinpoistoja, aina normaali siirto
+  if(STATE.quickMode){
+    STATE.pendingRows[p] = [];
+    STATE.selectedRing = null;
+    STATE.legalDests.clear();
+    setPhase(PHASE.MOVE_SELECT_RING);
+    return;
+  }
+
+  const rowsNow = findRowsForPlayer(p);
+  if(rowsNow.length){
+    STATE.pendingRows[p] = rowsNow;
+    beginRowResolution(rowsNow, p, true);
+    return;
+  }
+
+  STATE.pendingRows[p] = [];
+  STATE.selectedRing = null;
+  STATE.legalDests.clear();
+  setPhase(PHASE.MOVE_SELECT_RING);
+}
+
+// --- Move generation / validation for a selected ring
+function commonLineBetween(aId, bId){
+  const aInfo = BOARD.nodeLines.get(aId) || [];
+  const bInfo = BOARD.nodeLines.get(bId) || [];
+  for(const ai of aInfo){
+    for(const bi of bInfo){
+      if(ai.li === bi.li){
+        return { li: ai.li, aPos: ai.pos, bPos: bi.pos, line: BOARD.lines[ai.li] };
+      }
+    }
+  }
+  return null;
+}
+
+function isMarkerAt(nid){
+  const o = getOcc(nid);
+  return !!(o && o.type==="MARK");
+}
+function isRingAt(nid){
+  const o = getOcc(nid);
+  return !!(o && o.type==="RING");
+}
+
+function legalDestFromTo(line, fromPos, toPos){
+  // destination must be empty
+  const destId = line[toPos];
+  if(!isEmpty(destId)) return false;
+
+  // moving across must not cross rings; only markers are jumpable
+  const step = (toPos > fromPos) ? 1 : -1;
+  const between = [];
+  for(let i=fromPos+step; i!==toPos; i+=step){
+    between.push(line[i]);
+  }
+
+  // Any ring in between => illegal
+  for(const nid of between){
+    if(isRingAt(nid)) return false;
+  }
+
+  // Identify markers in between
+  const markerIdx = [];
+  for(let i=0;i<between.length;i++){
+    if(isMarkerAt(between[i])) markerIdx.push(i);
+  }
+
+  if(markerIdx.length===0){
+    // simple slide across empties
+    // ensure all between are empty (no rings already checked, but markers none)
+    return true;
+  }
+
+  // There is at least one marker -> must be contiguous block of markers with no empties between,
+  // and destination must be the first empty right after that block.
+  const first = markerIdx[0];
+  // all before first must be empty (no markers, no rings)
+  for(let i=0;i<first;i++){
+    if(!isEmpty(between[i])) return false; // safety
+  }
+
+  // from first marker onward, they must be all markers until end of between (because destination is first empty)
+  // BUT: player may also have empties AFTER marker block only if destination is exactly first empty after block.
+  // That means: the last element in "between" must be a marker (because destination is immediately after markers)
+  // and there must be no empty interleaving in the marker block.
+  for(let i=first;i<between.length;i++){
+    if(!isMarkerAt(between[i])) return false;
+  }
+
+  return true;
+}
+
+function computeLegalDests(fromId){
+  const o = getOcc(fromId);
+  if(!o || o.type!=="RING" || o.player !== STATE.currentPlayer) return new Set();
+
+  const dests = new Set();
+  const lineInfos = BOARD.nodeLines.get(fromId) || [];
+  for(const info of lineInfos){
+    const line = BOARD.lines[info.li];
+    const fromPos = info.pos;
+
+    // scan both directions along this line for empties/marker jumps
+    // (we can simply test every position; line lengths are small)
+    for(let toPos=0; toPos<line.length; toPos++){
+      if(toPos===fromPos) continue;
+      if(legalDestFromTo(line, fromPos, toPos)){
+        dests.add(line[toPos]);
+      }
+    }
+  }
+  return dests;
+}
+
+// --- Apply a move: place marker at origin (same color), move ring, flip jumped markers
+function applyMove(fromId, toId){
+  const common = commonLineBetween(fromId, toId);
+  if(!common) return { ok:false, msg:"Kohde ei ole samalla suoralla linjalla." };
+
+  const ring = getOcc(fromId);
+  if(!ring || ring.type!=="RING" || ring.player !== STATE.currentPlayer){
+    return { ok:false, msg:"Valitse oma rengas." };
+  }
+  if(!isEmpty(toId)) return { ok:false, msg:"Kohde ei ole tyhjä." };
+
+  const line = common.line;
+  const fromPos = common.aPos;
+  const toPos = common.bPos;
+
+  if(!legalDestFromTo(line, fromPos, toPos)){
+    return { ok:false, msg:"Siirto ei ole sääntöjen mukainen." };
+  }
+
+  // Determine jumped markers (between positions)
+  const step = (toPos > fromPos) ? 1 : -1;
+  const between = [];
+  for(let i=fromPos+step; i!==toPos; i+=step){
+    between.push(line[i]);
+  }
+  const jumpedMarkers = between.filter(nid => isMarkerAt(nid)); // by legality, either none or all after first marker to end
+
+  // Apply:
+  // 1) put marker (current player) at origin (inside ring), ring will move away
+  // 2) move ring to destination
+  // 3) flip jumped markers
+  STATE.occ.set(fromId, { type:"MARK", player: STATE.currentPlayer }); // marker remains; not flipped
+  STATE.occ.set(toId, { type:"RING", player: STATE.currentPlayer });
+
+  // flip jumped markers
+  for(const nid of jumpedMarkers){
+    const m = getOcc(nid);
+    if(m && m.type==="MARK"){
+      m.player = (m.player===1) ? 2 : 1;
+      STATE.occ.set(nid, m);
+    }
+  }
+
+  return { ok:true, msg:"Siirto tehty." };
+}
+
+// --- Row resolution actions
+function removeActiveRowMarkers(){
+  const row = STATE.activeRow;
+  if(!row) return;
+
+  // remove 5 markers
+  for(const nid of row.nodes){
+    const o = getOcc(nid);
+    if(o && o.type==="MARK"){
+      STATE.occ.delete(nid);
+    }
+  }
+
+  // clear that player's pending rows (we recompute anyway)
+  const p = row.player;
+  STATE.pendingRows[p] = [];
+  STATE.activeRow = null;
+  STATE.rowChoices = [];
+  STATE.rowChoiceIndex = 0;
+
+  // next: remove ring
+  STATE.mustRemoveRingFor = p;
+  setPhase(PHASE.RESOLVE_ROW_REMOVE_RING);
+}
+
+function removeOneRingOfPlayer(p, ringNodeId){
+  const o = getOcc(ringNodeId);
+  if(!o || o.type!=="RING" || o.player!==p) return false;
+
+  STATE.occ.delete(ringNodeId);
+  STATE.removedRings[p]++;
+
+  if(STATE.removedRings[p] >= STATE.winTarget){
+    setPhase(PHASE.GAME_OVER);
+    return true;
+  }
+  return true;
+}
+
+// --- Click handler
+function onNodeClick(nid){
+  if(STATE.phase === PHASE.GAME_OVER) return;
+
+  // PLACE RINGS
+  if(STATE.phase === PHASE.PLACE_RINGS){
+    if(!isEmpty(nid)){
+      setStatus(`<b>Ei käy.</b><br><span class="small">Risteys on varattu.</span>`);
+      return;
+    }
+    pushHistory();
+    STATE.occ.set(nid, { type:"RING", player: STATE.currentPlayer });
+    STATE.ringsPlaced[STATE.currentPlayer]++;
+
+    if(STATE.ringsPlaced[1]===5 && STATE.ringsPlaced[2]===5){
+      // start play: white begins per rules (starting player is white; already p1)
+      STATE.currentPlayer = 1;
+      STATE.selectedRing = null;
+      STATE.legalDests.clear();
+      setPhase(PHASE.MOVE_SELECT_RING);
+      render();
+      postState();
+      return;
+    }
+
+    // alternate placing
+    STATE.currentPlayer = (STATE.currentPlayer===1) ? 2 : 1;
+    render();
+    postState();
+    return;
+  }
+
+  // RESOLVE ROW: remove markers (click any marker in the highlighted row)
+  if(STATE.phase === PHASE.RESOLVE_ROW_REMOVE_MARKERS){
+    const row = STATE.activeRow;
+    if(!row){
+      // safety: recompute for current player
+      const rows = findRowsForPlayer(STATE.currentPlayer);
+      if(rows.length){
+        STATE.rowChoices = rows;
+        STATE.rowChoiceIndex = 0;
+        STATE.activeRow = rows[0];
+      }else{
+        startTurn();
+      }
+      render();
+      postState();
+      return;
+    }
+    if(!row.nodes.includes(nid)){
+      setStatus(`<b>Poista rivi.</b><br><span class="small">Klikkaa korostettuja 5 merkkiä.</span>`);
+      return;
+    }
+    pushHistory();
+    removeActiveRowMarkers();
+    render();
+    postState();
+    return;
+  }
+
+  // RESOLVE RING: click own ring to remove
+  if(STATE.phase === PHASE.RESOLVE_ROW_REMOVE_RING){
+    const p = STATE.mustRemoveRingFor ?? STATE.currentPlayer;
+    const o = getOcc(nid);
+    if(!o || o.type!=="RING" || o.player!==p){
+      setStatus(`<b>Poista rengas.</b><br><span class="small">Klikkaa omaa rengasta.</span>`);
+      return;
+    }
+    pushHistory();
+    removeOneRingOfPlayer(p, nid);
+    if(STATE.phase === PHASE.GAME_OVER){
+      render();
+      postState();
+      return;
+    }
+
+    // after removing ring: there might still be rows (because run>5 or multiple created)
+    const rowsNow = findRowsForPlayer(p);
+    if(rowsNow.length){
+      beginRowResolution(rowsNow, p, STATE.resolvingFromPending);
+      render();
+      postState();
+      return;
+    }
+
+    // If ring was removed by opponent (pending resolution), current player still hasn't moved yet.
+    // Decide whose turn continues:
+    if(p !== STATE.currentPlayer){
+      // opponent resolved pending; keep current player same and start turn
+      // but this path typically doesn't happen since we set currentPlayer to the resolver at startTurn
+    }
+
+    // If this resolution belonged to current player (either immediate after his move OR pending at start of turn),
+    // then we continue depending on context:
+    // - If it was immediate after mover's move, turn had not switched yet; we need to check opponent rows and then pass.
+    // - If it was pending at start of turn, then after resolving you may now make your move.
+    //
+    // We detect context by: if player has just moved we would have set phase from move; simplest:
+    // If there is still a selectedRing (none), we just startTurn for currentPlayer.
+    STATE.mustRemoveRingFor = null;
+
+// ✅ Vuoronvaihto riippuu siitä, oliko tämä pakollinen rivinpoisto vuoron alussa vai oman siirron seuraus
+if(STATE.resolvingFromPending){
+  // Tämä tapahtui ennen pelaajan normaalia siirtoa -> sama pelaaja jatkaa (nyt vasta saa tehdä siirron)
+  STATE.resolvingFromPending = false;
+  // currentPlayer pysyy p:nä
+}else{
+  // Tämä tapahtui oman siirron jälkeen -> vuoro vaihtuu vastustajalle
+  STATE.currentPlayer = (STATE.currentPlayer === 1) ? 2 : 1;
+  STATE.resolvingFromPending = false;
+}
+
+startTurn();
+    render();
+    postState();
+    return;
+  }
+
+  // MOVE: select ring
+  if(STATE.phase === PHASE.MOVE_SELECT_RING){
+    const o = getOcc(nid);
+    if(!o || o.type!=="RING" || o.player !== STATE.currentPlayer){
+      setStatus(`<b>Valitse rengas.</b><br><span class="small">Klikkaa omaa rengasta.</span>`);
+      return;
+    }
+    pushHistory();
+    STATE.selectedRing = nid;
+    STATE.legalDests = computeLegalDests(nid);
+    setPhase(PHASE.MOVE_SELECT_DEST);
+    render();
+    postState();
+    return;
+  }
+
+  // MOVE: select destination
+  if(STATE.phase === PHASE.MOVE_SELECT_DEST){
+    if(!STATE.selectedRing){
+      setPhase(PHASE.MOVE_SELECT_RING);
+      render();
+      return;
+    }
+    if(nid === STATE.selectedRing){
+      // cancel
+      pushHistory();
+      STATE.selectedRing = null;
+      STATE.legalDests.clear();
+      setPhase(PHASE.MOVE_SELECT_RING);
+      render();
+      postState();
+      return;
+    }
+    if(!STATE.legalDests.has(nid)){
+      setStatus(`<b>Ei käy.</b><br><span class="small">Valitse korostettu kohde (laillinen siirto).</span>`);
+      return;
+    }
+
+    pushHistory();
+    const mover = STATE.currentPlayer;
+    const res = applyMove(STATE.selectedRing, nid);
+    STATE.selectedRing = null;
+    STATE.legalDests.clear();
+
+    if(!res.ok){
+      setStatus(`<b>Ei käy.</b><br><span class="small">${res.msg}</span>`);
+      setPhase(PHASE.MOVE_SELECT_RING);
+      render();
+      postState();
+      return;
+    }
+
+    // After a move: check rows for both players per rules
+    checkAndQueueRowsAfterMove(mover);
+
+    render();
+    postState();
+    return;
+  }
+}
+
+// --- Rendering
+function svgEl(tag, attrs){
+  const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for(const [k,v] of Object.entries(attrs||{})){
+    e.setAttribute(k, String(v));
+  }
+  return e;
+}
+
+function clearSvg(){
+  while(UI.svg.firstChild) UI.svg.removeChild(UI.svg.firstChild);
+}
+
+function render(){
+  clearSvg();
+
+  // board lines
+  const drawnEdges = new Set();
+  for(const line of BOARD.lines){
+    for(let i=0;i<line.length-1;i++){
+      const a = BOARD.nodeById.get(line[i]);
+      const b = BOARD.nodeById.get(line[i+1]);
+      const key = (a.id < b.id) ? (a.id+"-"+b.id) : (b.id+"-"+a.id);
+      if(drawnEdges.has(key)) continue;
+      drawnEdges.add(key);
+      UI.svg.appendChild(svgEl("line",{
+        x1:a.x, y1:a.y, x2:b.x, y2:b.y,
+        stroke:"var(--line)",
+        "stroke-width":3,
+        "stroke-linecap":"round",
+        opacity:0.58
+      }));
+    }
+  }
+
+  // Active row highlight
+  const activeRowSet = new Set((STATE.activeRow && STATE.phase===PHASE.RESOLVE_ROW_REMOVE_MARKERS) ? STATE.activeRow.nodes : []);
+
+  // legal dest highlight
+  const destSet = (STATE.phase===PHASE.MOVE_SELECT_DEST) ? STATE.legalDests : new Set();
+
+  // nodes + pieces + hit
+  for(const n of BOARD.nodes){
+    // base node
+    UI.svg.appendChild(svgEl("circle",{
+      cx:n.x, cy:n.y, r:9.5,
+      fill:"var(--nodeFill)",
+      stroke:"var(--nodeStroke)",
+      "stroke-width":2
+    }));
+
+    // legal destinations
+    if(destSet.has(n.id)){
+      UI.svg.appendChild(svgEl("circle",{
+        cx:n.x, cy:n.y, r:18,
+        fill:"none",
+        stroke:"var(--good)",
+        "stroke-width":4,
+        opacity:0.95
+      }));
+    }
+
+    // selection ring highlight
+    if(STATE.selectedRing === n.id){
+      UI.svg.appendChild(svgEl("circle",{
+        cx:n.x, cy:n.y, r:24,
+        fill:"none",
+        stroke:"var(--accent)",
+        "stroke-width":4,
+        opacity:0.95
+      }));
+    }
+
+    // active row marker highlight
+    if(activeRowSet.has(n.id)){
+      UI.svg.appendChild(svgEl("circle",{
+        cx:n.x, cy:n.y, r:20,
+        fill:"rgba(251,191,36,.10)",
+        stroke:"var(--warn)",
+        "stroke-width":3,
+        opacity:0.95
+      }));
+    }
+
+    // occupant
+    const o = getOcc(n.id);
+    if(o){
+      if(o.type==="MARK"){
+        const fill = (o.player===1) ? "var(--whiteMark)" : "var(--blackMark)";
+        const stroke = (o.player===1) ? "rgba(0,0,0,.35)" : "rgba(120,0,20,.55)";
+        UI.svg.appendChild(svgEl("circle",{
+          cx:n.x, cy:n.y, r:15.5,
+          fill,
+          stroke,
+          "stroke-width":2
+        }));
+      }else if(o.type==="RING"){
+        const stroke = (o.player===1) ? "var(--whiteRing)" : "var(--blackRing)";
+        UI.svg.appendChild(svgEl("circle",{
+          cx:n.x, cy:n.y, r:23.5,
+          fill:"none",
+          stroke,
+          "stroke-width":6
+        }));
+        // inner subtle
+        UI.svg.appendChild(svgEl("circle",{
+          cx:n.x, cy:n.y, r:14,
+          fill:"rgba(0,0,0,.18)",
+          stroke:"rgba(255,255,255,.08)",
+          "stroke-width":1
+        }));
+      }
+    }
+
+
+    // quick win highlight
+    if(STATE.quickMode && STATE.phase===PHASE.GAME_OVER && Array.isArray(STATE.winningRow) && STATE.winningRow.includes(n.id)){
+      UI.svg.appendChild(svgEl("circle",{
+        cx:n.x, cy:n.y, r:28,
+        fill:"var(--winFill)",
+        stroke:"var(--winStroke)",
+        "stroke-width":6,
+        opacity:0.98
+      }));
+    }
+
+    // hit target
+    const hit = svgEl("circle",{
+      cx:n.x, cy:n.y, r:34,
+      fill:"transparent",
+      style:"cursor:pointer"
+    });
+    hit.addEventListener("click", ()=>onNodeClick(n.id));
+    UI.svg.appendChild(hit);
+  }
+}
+
+/* SERVICE WORKER */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('./service-worker.js')
+      .catch(err => console.warn('Service workerin rekisteröinti epäonnistui:', err));
+  });
+}
+
+
+// init
+resetGame();
+setStatus(`<b>YINSH</b><br><span class="small">Aloita asettamalla renkaat: 5 rengasta per pelaaja, vuorotellen. ${STATE.winTarget===1 ? "Pikapeli: voittoon riittää 1 rivi." : "Voitto: poista 3 omaa rengasta."}</span>`);
+postState();
+render();
+</script>
+</body>
+</html>
