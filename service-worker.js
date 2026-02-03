@@ -1,5 +1,5 @@
 /* Minimal SW: cache app shell */
-const CACHE = "yinsh-v1";
+const CACHE = "yinsh-v2";
 const ASSETS = [
   "./",
   "./index.html",
